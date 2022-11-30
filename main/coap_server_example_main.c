@@ -51,11 +51,14 @@
    the config you want - ie #define EXAMPLE_COAP_LOG_DEFAULT_LEVEL 7
 */
 #define EXAMPLE_COAP_LOG_DEFAULT_LEVEL CONFIG_COAP_LOG_DEFAULT_LEVEL
-
+ 
 const static char *TAG = "CoAP_server";
 
 static char espressif_data[100];
 static int espressif_data_len = 0;
+
+static char ADP_data[] = { 'A','d','P',' ','R','e','s','o','u','r','c','e', 0 };
+static int ADP_data_len = 0;
 
 #ifdef CONFIG_COAP_MBEDTLS_PKI
 /* CA cert, taken from coap_ca.pem
@@ -95,6 +98,22 @@ hnd_espressif_get(coap_resource_t *resource,
                                  query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
                                  (size_t)espressif_data_len,
                                  (const u_char *)espressif_data,
+                                 NULL, NULL);
+}
+
+static void
+hnd_ADP_get(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    ADP_data_len = strlen(ADP_data);
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    coap_add_data_large_response(resource, session, request, response,
+                                 query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
+                                 (size_t)ADP_data_len,
+                                 (const u_char *)ADP_data,
                                  NULL, NULL);
 }
 
@@ -297,6 +316,8 @@ static void coap_example_server(void *p)
         coap_register_handler(resource, COAP_REQUEST_GET, hnd_espressif_get);
         coap_register_handler(resource, COAP_REQUEST_PUT, hnd_espressif_put);
         coap_register_handler(resource, COAP_REQUEST_DELETE, hnd_espressif_delete);
+
+        coap_register_handler(resource1, COAP_REQUEST_GET, hnd_ADP_get);
         
         /* We possibly want to Observe the GETs */
         coap_resource_set_get_observable(resource, 1);
